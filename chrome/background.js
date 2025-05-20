@@ -66,10 +66,21 @@ function main(detail) {
 }
 
 function setCurrentUser(detail) {
+    if (detail.url !== "https://boardgamearena.com/player") {
+        return;
+    }
     chrome.scripting.executeScript({
         target: { tabId: detail.tabId },
-        func: () => {
-            const element = document.querySelector("#real_player_name");
+        func: async () => {
+            const delay = ms => new Promise(res => setTimeout(res, ms));
+            while (!document.querySelector("#real_player_name")) {
+                await delay(1000);
+            }
+            let element = document.querySelector("#real_player_name");
+            while (element.innerText.length < 1000) {
+                await delay(1000);
+                element = document.querySelector("#real_player_name");
+            }
             return element?.innerText || "Not found";
         }
     }).then(results => {
