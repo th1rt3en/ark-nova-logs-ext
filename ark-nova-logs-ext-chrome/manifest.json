@@ -1,0 +1,24 @@
+{
+    "background": {
+        "service_worker": "background.js"
+    },
+    "action": {
+        "default_title": "Start"
+    },
+    "host_permissions": [
+        "https://boardgamearena.com/*",
+        "*://*/*"
+    ],
+    "description": "Automatically download Ark Nova logs from BGA",
+    "homepage_url": "https://github.com/mdn/webextensions-examples/tree/master/tabs-tabs-tabs",
+    "manifest_version": 3,
+    "name": "Ark Nova BGA Logs Downloader",
+    "permissions": [
+        "activeTab",
+        "storage",
+        "scripting",
+        "tabs",
+        "webNavigation"
+    ],
+    "version": "1.0"
+}
