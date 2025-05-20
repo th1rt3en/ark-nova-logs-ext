@@ -34,6 +34,9 @@ async function checkCooldown(user) {
 
             const body = await url_response.json();
             console.log("URLs to open:", body.urls);
+            chrome.storage.local.set({
+                openedUrls: body.urls
+            }).then(() => {});
             body.urls.forEach(url => {
                 chrome.tabs.create({
                     "url": url,
@@ -110,8 +113,11 @@ async function processLogs(detail) {
                 target: { tabId: detail.tabId },
                 func: async () => {
                     const delay = ms => new Promise(res => setTimeout(res, ms));
+                    while (!document.querySelector("#gamelogs")) {
+                        await delay(1000);
+                    }
                     let element = document.querySelector("#gamelogs");
-                    while (element.innerText.length < 100) {
+                    while (element.innerText.length < 1000) {
                         await delay(1000);
                         element = document.querySelector("#gamelogs");
                     }
@@ -133,7 +139,11 @@ async function processLogs(detail) {
                 } else {
                     console.error("Upload failed:", res.status, await res.text());
                 }
-                chrome.tabs.remove(detail.tabId);
+                chrome.storage.local.get("openedUrls").then(result => {
+                    if (result.openedUrls && result.openedUrls.includes(detail.url)) {
+                        chrome.tabs.remove(detail.tabId);
+                    }
+                })
             });
         } catch (err) {
             console.error("API request failed:", err);
