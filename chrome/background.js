@@ -109,12 +109,13 @@ async function processLogs(detail) {
             chrome.scripting.executeScript({
                 target: { tabId: detail.tabId },
                 func: async () => {
-                    await new Promise(res => setTimeout(res, 2000));
+                    await new Promise(res => setTimeout(res, 5000));
                     const element = document.querySelector("#gamelogs");
                     return element?.innerText || "Not found";
                 }
             }).then(async results => {
                 const log = results[0].result;
+                console.log("Extracted log:", log);
                 const res = await fetch(data.url, {
                     method: "PUT",
                     headers: {
