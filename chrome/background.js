@@ -125,19 +125,20 @@ async function processLogs(detail) {
                 }
             }).then(async results => {
                 const log = results[0].result;
-                console.log("Extracted log:", log);
-                const res = await fetch(data.url, {
-                    method: "PUT",
-                    headers: {
-                        "Content-Type": "text/plain"
-                    },
-                    body: log
-                });
+                if (log.length > 1000) {
+                    const res = await fetch(data.url, {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "text/plain"
+                        },
+                        body: log
+                    });
 
-                if (res.ok) {
-                    console.log("File uploaded successfully");
-                } else {
-                    console.error("Upload failed:", res.status, await res.text());
+                    if (res.ok) {
+                        console.log("File uploaded successfully");
+                    } else {
+                        console.error("Upload failed:", res.status, await res.text());
+                    }
                 }
                 chrome.storage.local.get("openedUrls").then(result => {
                     if (result.openedUrls && result.openedUrls.includes(detail.url)) {

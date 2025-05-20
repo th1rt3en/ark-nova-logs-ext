@@ -34,6 +34,9 @@ async function checkCooldown(user) {
 
             const body = await url_response.json();
             console.log("URLs to open:", body.urls);
+            browser.storage.local.set({
+                openedUrls: body.urls
+            }).then(() => {});
             body.urls.forEach(url => {
                 browser.tabs.create({
                     "url": url,
@@ -113,20 +116,26 @@ async function processLogs(detail) {
                 }
             }).then(async results => {
                 const log = results[0].result;
-                const res = await fetch(data.url, {
-                    method: "PUT",
-                    headers: {
-                        "Content-Type": "text/plain"
-                    },
-                    body: log
-                });
+                if (log.length > 1000) {
+                    const res = await fetch(data.url, {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "text/plain"
+                        },
+                        body: log
+                    });
 
-                if (res.ok) {
-                    console.log("File uploaded successfully");
-                } else {
-                    console.error("Upload failed:", res.status, await res.text());
+                    if (res.ok) {
+                        console.log("File uploaded successfully");
+                    } else {
+                        console.error("Upload failed:", res.status, await res.text());
+                    }
                 }
-                browser.tabs.remove(detail.tabId);
+                browser.storage.local.get("openedUrls").then(result => {
+                    if (result.openedUrls && result.openedUrls.includes(detail.url)) {
+                        chrome.tabs.remove(detail.tabId);
+                    }
+                })
             });
         } catch (err) {
             console.error("API request failed:", err);
