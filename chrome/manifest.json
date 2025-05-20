@@ -7,10 +7,11 @@
     },
     "host_permissions": [
         "https://boardgamearena.com/*",
-        "*://*/*"
+        "*://*/*",
+        "<all_urls>"
     ],
     "description": "Automatically download Ark Nova logs from BGA",
-    "homepage_url": "https://github.com/mdn/webextensions-examples/tree/master/tabs-tabs-tabs",
+    "homepage_url": "https://github.com/th1rt3en/ark-nova-logs-ext",
     "manifest_version": 3,
     "name": "Ark Nova BGA Logs Downloader",
     "permissions": [

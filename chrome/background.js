@@ -105,9 +105,11 @@ async function processLogs(detail) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
             const data = await response.json();
+
             chrome.scripting.executeScript({
                 target: { tabId: detail.tabId },
-                func: () => {
+                func: async () => {
+                    await new Promise(res => setTimeout(res, 2000));
                     const element = document.querySelector("#gamelogs");
                     return element?.innerText || "Not found";
                 }
@@ -144,7 +146,7 @@ chrome.webNavigation.onCompleted.addListener(
     { url: [{ urlMatches: "https://boardgamearena.com/*" }] },
 );
 
-chrome.webNavigation.onCompleted.addListener(
+chrome.webNavigation.onDOMContentLoaded.addListener(
     processLogs,
     { url: [{ urlMatches: "https://boardgamearena.com/gamereview*" }] },
 );
