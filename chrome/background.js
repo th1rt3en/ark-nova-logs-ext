@@ -109,8 +109,12 @@ async function processLogs(detail) {
             chrome.scripting.executeScript({
                 target: { tabId: detail.tabId },
                 func: async () => {
-                    await new Promise(res => setTimeout(res, 5000));
-                    const element = document.querySelector("#gamelogs");
+                    const delay = ms => new Promise(res => setTimeout(res, ms));
+                    let element = document.querySelector("#gamelogs");
+                    while (element.innerText.length < 100) {
+                        await delay(1000);
+                        element = document.querySelector("#gamelogs");
+                    }
                     return element?.innerText || "Not found";
                 }
             }).then(async results => {
