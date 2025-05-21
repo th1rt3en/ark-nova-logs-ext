@@ -49,20 +49,17 @@ async function checkCooldown(user) {
     }
 }
 
-function main(detail) {
-    if (detail.url !== "https://boardgamearena.com/player" && !detail.url.startsWith("https://boardgamearena.com/gamereview")) {
-        let getting = browser.storage.local.get("currentUser");
-        getting.then(result => {
-            if (!result.currentUser) {
-                browser.tabs.create({
-                    "url": "https://boardgamearena.com/player",
-                    "active": false
-                });
-            } else {
-                checkCooldown(result.currentUser);
-            }
-        })
-    }
+function main() {
+    browser.storage.local.get("currentUser").then(result => {
+        if (!result.currentUser) {
+            browser.tabs.create({
+                "url": "https://boardgamearena.com/player",
+                "active": false
+            });
+        } else {
+            checkCooldown(result.currentUser);
+        }
+    })
 }
 
 function setCurrentUser(detail) {
@@ -147,17 +144,36 @@ async function processLogs(detail) {
     }
 }
 
+function startCollection(tab) {
+    browser.storage.local.get("isRunning").then(result => {
+        if (result.isRunning) {
+            console.log("Stopping collection");
+            browser.storage.local.get("intervalId").then(result => {
+                if (result.intervalId) {
+                    clearInterval(result.intervalId);
+                }
+            });
+            browser.storage.local.set({ isRunning: false });
+            browser.action.setBadgeText({ text: "OFF" });
+        } else {
+            console.log("Starting collection");
+            let intervalId = setInterval(main, 1000 * 60 * 5);
+            browser.storage.local.set({ isRunning: true });
+            browser.storage.local.set({ intervalId: intervalId });
+            browser.action.setBadgeText({ text: "ON" });
+        }
+    })
+}
+
 browser.webNavigation.onCompleted.addListener(
     setCurrentUser,
     { url: [{ urlMatches: "https://boardgamearena.com/player" }] },
 );
 
-browser.webNavigation.onCompleted.addListener(
-    main,
-    { url: [{ urlMatches: "https://boardgamearena.com/*" }] },
-);
 
 browser.webNavigation.onCompleted.addListener(
     processLogs,
     { url: [{ urlMatches: "https://boardgamearena.com/gamereview*" }] },
 );
+
+browser.action.onClicked.addListener(startCollection);

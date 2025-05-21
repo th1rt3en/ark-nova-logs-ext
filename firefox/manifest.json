@@ -10,7 +10,11 @@
         ]
     },
     "action": {
-        "default_title": "Start"
+        "default_icon": {
+            "16": "icon.webp",
+            "32": "icon.webp"
+        },
+        "default_title": "Start collecting logs in background"
     },
     "host_permissions": [
         "https://boardgamearena.com/*",
