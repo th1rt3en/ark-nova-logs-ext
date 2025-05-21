@@ -49,20 +49,17 @@ async function checkCooldown(user) {
     }
 }
 
-function main(detail) {
-    if (detail.url !== "https://boardgamearena.com/player" && !detail.url.startsWith("https://boardgamearena.com/gamereview")) {
-        let getting = chrome.storage.local.get("currentUser");
-        getting.then(result => {
-            if (!result.currentUser) {
-                chrome.tabs.create({
-                    "url": "https://boardgamearena.com/player",
-                    "active": false
-                });
-            } else {
-                checkCooldown(result.currentUser);
-            }
-        })
-    }
+function main() {
+    chrome.storage.local.get("currentUser").then(result => {
+        if (!result.currentUser) {
+            chrome.tabs.create({
+                "url": "https://boardgamearena.com/player",
+                "active": false
+            });
+        } else {
+            checkCooldown(result.currentUser);
+        }
+    })
 }
 
 function setCurrentUser(detail) {
@@ -163,6 +160,27 @@ async function processLogs(detail) {
     }
 }
 
+function startCollection(tab) {
+    chrome.storage.local.get("isRunning").then(result => {
+        if (result.isRunning) {
+            console.log("Stopping collection");
+            chrome.storage.local.get("intervalId").then(result => {
+                if (result.intervalId) {
+                    clearInterval(result.intervalId);
+                }
+            });
+            chrome.storage.local.set({ isRunning: false });
+            chrome.action.setBadgeText({ text: "OFF" });
+        } else {
+            console.log("Starting collection");
+            let intervalId = setInterval(main, 1000 * 60 * 5);
+            chrome.storage.local.set({ isRunning: true });
+            chrome.storage.local.set({ intervalId: intervalId });
+            chrome.action.setBadgeText({ text: "ON" });
+        }
+    })
+}
+
 chrome.webNavigation.onCompleted.addListener(
     setCurrentUser,
     { url: [{ urlMatches: "https://boardgamearena.com/player" }] },
@@ -177,3 +195,5 @@ chrome.webNavigation.onDOMContentLoaded.addListener(
     processLogs,
     { url: [{ urlMatches: "https://boardgamearena.com/gamereview*" }] },
 );
+
+chrome.action.onClicked.addListener(startCollection);

@@ -10,6 +10,9 @@
         "*://*/*",
         "<all_urls>"
     ],
+    "icons": {
+        "48": "icon.png"
+    },
     "description": "Automatically download Ark Nova logs from BGA",
     "homepage_url": "https://github.com/th1rt3en/ark-nova-logs-ext",
     "manifest_version": 3,
