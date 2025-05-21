@@ -49,7 +49,10 @@ async function checkCooldown(user) {
     }
 }
 
-function main() {
+function main(alarmInfo) {
+    if (alarmInfo.name !== "main") {
+        return;
+    }
     chrome.storage.local.get("currentUser").then(result => {
         if (!result.currentUser) {
             chrome.tabs.create({
@@ -164,18 +167,13 @@ function startCollection(tab) {
     chrome.storage.local.get("isRunning").then(result => {
         if (result.isRunning) {
             console.log("Stopping collection");
-            chrome.storage.local.get("intervalId").then(result => {
-                if (result.intervalId) {
-                    clearInterval(result.intervalId);
-                }
-            });
+            chrome.alarms.clear("main");
             chrome.storage.local.set({ isRunning: false });
             chrome.action.setBadgeText({ text: "OFF" });
         } else {
             console.log("Starting collection");
-            let intervalId = setInterval(main, 1000 * 60 * 5);
             chrome.storage.local.set({ isRunning: true });
-            chrome.storage.local.set({ intervalId: intervalId });
+            chrome.alarms.create("main", { periodInMinutes: 5 });
             chrome.action.setBadgeText({ text: "ON" });
         }
     })
@@ -197,3 +195,4 @@ chrome.webNavigation.onDOMContentLoaded.addListener(
 );
 
 chrome.action.onClicked.addListener(startCollection);
+chrome.alarms.onAlarm.addListener(main);

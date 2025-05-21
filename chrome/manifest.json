@@ -19,6 +19,7 @@
     "name": "Ark Nova BGA Logs Downloader",
     "permissions": [
         "activeTab",
+        "alarms",
         "storage",
         "scripting",
         "tabs",
