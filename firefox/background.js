@@ -49,7 +49,10 @@ async function checkCooldown(user) {
     }
 }
 
-function main() {
+function main(alarmInfo) {
+    if (alarmInfo.name !== "main") {
+        return;
+    }
     browser.storage.local.get("currentUser").then(result => {
         if (!result.currentUser) {
             browser.tabs.create({
@@ -148,18 +151,13 @@ function startCollection(tab) {
     browser.storage.local.get("isRunning").then(result => {
         if (result.isRunning) {
             console.log("Stopping collection");
-            browser.storage.local.get("intervalId").then(result => {
-                if (result.intervalId) {
-                    clearInterval(result.intervalId);
-                }
-            });
+            browser.alarms.clear("main");
             browser.storage.local.set({ isRunning: false });
             browser.action.setBadgeText({ text: "OFF" });
         } else {
             console.log("Starting collection");
-            let intervalId = setInterval(main, 1000 * 60 * 5);
             browser.storage.local.set({ isRunning: true });
-            browser.storage.local.set({ intervalId: intervalId });
+            browser.alarms.create("main", { periodInMinutes: 5 });
             browser.action.setBadgeText({ text: "ON" });
         }
     })
@@ -177,3 +175,4 @@ browser.webNavigation.onCompleted.addListener(
 );
 
 browser.action.onClicked.addListener(startCollection);
+browser.alarms.onAlarm.addListener(main);
