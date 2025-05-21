@@ -2,13 +2,6 @@
 
 This extension automatically collects BGA logs for Ark Nova games and upload it to be analyzed.
 
-## Features
-
-- Detailed logging of game events
-- Export logs in various formats (JSON, CSV)
-- Search and filter log entries
-- Easy integration with Ark Nova
-
 ## Installation
 
 1. Download the repository as zip
