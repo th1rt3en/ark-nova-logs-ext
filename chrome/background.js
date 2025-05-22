@@ -69,18 +69,11 @@ function setCurrentUser(detail) {
     if (detail.url !== "https://boardgamearena.com/player") {
         return;
     }
+    console.log("Setting current user for URL:", detail.url);
     chrome.scripting.executeScript({
         target: { tabId: detail.tabId },
-        func: async () => {
-            const delay = ms => new Promise(res => setTimeout(res, ms));
-            while (!document.querySelector("#real_player_name")) {
-                await delay(1000);
-            }
-            let element = document.querySelector("#real_player_name");
-            while (element.innerText.length < 1000) {
-                await delay(1000);
-                element = document.querySelector("#real_player_name");
-            }
+        func: () => {
+            element = document.querySelector("#real_player_name");
             return element?.innerText || "Not found";
         }
     }).then(results => {
