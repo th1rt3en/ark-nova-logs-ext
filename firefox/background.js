@@ -157,7 +157,7 @@ function startCollection(tab) {
         } else {
             console.log("Starting collection");
             browser.storage.local.set({ isRunning: true });
-            browser.alarms.create("main", { periodInMinutes: 1 });
+            browser.alarms.create("main", { periodInMinutes: 5 });
             browser.action.setBadgeText({ text: "ON" });
         }
     })
