@@ -69,24 +69,30 @@ function setCurrentUser(detail) {
     if (detail.url !== "https://boardgamearena.com/player") {
         return;
     }
-    browser.scripting.executeScript({
-        target: { tabId: detail.tabId },
-        func: () => {
-            const element = document.querySelector("#real_player_name");
-            return element?.innerText || "Not found";
+    browser.storage.local.get("currentUser").then(result => {
+        if (!result.currentUser) {
+            browser.scripting.executeScript({
+                target: { tabId: detail.tabId },
+                func: () => {
+                    const element = document.querySelector("#real_player_name");
+                    return element?.innerText || "Not found";
+                }
+            }).then(results => {
+                const text = results[0].result;
+                browser.storage.local.set({
+                    currentUser: text
+                }).then(() => {
+                    console.log("Current user set to: " + text);
+                    browser.tabs.remove(detail.tabId);
+                }).catch(error => {
+                    console.error(`Error setting current user: ${error}`);
+                    browser.tabs.remove(detail.tabId);
+                })
+            });
+        } else {
+            checkCooldown(result.currentUser);
         }
-    }).then(results => {
-        const text = results[0].result;
-        browser.storage.local.set({
-            currentUser: text
-        }).then(() => {
-            console.log("Current user set to: " + text);
-            browser.tabs.remove(detail.tabId);
-        }).catch(error => {
-            console.error(`Error setting current user: ${error}`);
-            browser.tabs.remove(detail.tabId);
-        })
-    });
+    })
 }
 
 async function processLogs(detail) {

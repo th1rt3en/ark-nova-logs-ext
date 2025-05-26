@@ -69,25 +69,31 @@ function setCurrentUser(detail) {
     if (detail.url !== "https://boardgamearena.com/player") {
         return;
     }
-    console.log("Setting current user for URL:", detail.url);
-    chrome.scripting.executeScript({
-        target: { tabId: detail.tabId },
-        func: () => {
-            element = document.querySelector("#real_player_name");
-            return element?.innerText || "Not found";
+    chrome.storage.local.get("currentUser").then(result => {
+        if (!result.currentUser) {
+            console.log("Setting current user for URL:", detail.url);
+            chrome.scripting.executeScript({
+                target: { tabId: detail.tabId },
+                func: () => {
+                    element = document.querySelector("#real_player_name");
+                    return element?.innerText || "Not found";
+                }
+            }).then(results => {
+                const text = results[0].result;
+                chrome.storage.local.set({
+                    currentUser: text
+                }).then(() => {
+                    console.log("Current user set to: " + text);
+                    chrome.tabs.remove(detail.tabId);
+                }).catch(error => {
+                    console.error(`Error setting current user: ${error}`);
+                    chrome.tabs.remove(detail.tabId);
+                })
+            });
+        } else {
+            return;
         }
-    }).then(results => {
-        const text = results[0].result;
-        chrome.storage.local.set({
-            currentUser: text
-        }).then(() => {
-            console.log("Current user set to: " + text);
-            chrome.tabs.remove(detail.tabId);
-        }).catch(error => {
-            console.error(`Error setting current user: ${error}`);
-            chrome.tabs.remove(detail.tabId);
-        })
-    });
+    })
 }
 
 async function processLogs(detail) {
