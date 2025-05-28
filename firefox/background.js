@@ -143,7 +143,7 @@ async function processLogs(detail) {
                 browser.storage.local.get("openedUrls").then(result => {
                     console.log("Opened URLs:", result.openedUrls);
                     if (result.openedUrls && result.openedUrls.includes(detail.url)) {
-                        chrome.tabs.remove(detail.tabId);
+                        browser.tabs.remove(detail.tabId);
                     }
                 })
             });
