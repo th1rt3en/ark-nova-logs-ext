@@ -36,7 +36,7 @@ async function checkCooldown(user) {
             console.log("URLs to open:", body.urls);
             chrome.storage.local.set({
                 openedUrls: body.urls
-            }).then(() => {});
+            }).then(() => { });
             body.urls.forEach(url => {
                 chrome.tabs.create({
                     "url": url,
@@ -99,6 +99,23 @@ function setCurrentUser(detail) {
 async function processLogs(detail) {
     console.log("Processing logs for URL:", detail.url);
     const match = detail.url.match(/=(\d+)/);
+    let headers = {}
+    detail.requestHeaders.forEach(header => {
+        headers[header.name.toLowerCase()] = header.value;
+    });
+    if (headers["stop"] == "true") {
+        return;
+    }
+    headers["stop"] = "true";
+    console.log(headers);
+    
+    const response = await fetch(detail.url, {
+        method: "GET",
+        headers: headers,
+        credentials: "include" // helps ensure cookies are used if possible
+    });
+
+    const log = await response.text();
     if (match) {
         const table_id = match[1];
         console.log("Extracted table_id:", table_id);
@@ -118,44 +135,26 @@ async function processLogs(detail) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
             const data = await response.json();
+            if (log.length > 1000) {
+                const res = await fetch(data.url, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "text/plain"
+                    },
+                    body: log
+                });
 
-            chrome.scripting.executeScript({
-                target: { tabId: detail.tabId },
-                func: async () => {
-                    const delay = ms => new Promise(res => setTimeout(res, ms));
-                    while (!document.querySelector("#gamelogs")) {
-                        await delay(1000);
-                    }
-                    let element = document.querySelector("#gamelogs");
-                    while (element.innerText.length < 1000) {
-                        await delay(1000);
-                        element = document.querySelector("#gamelogs");
-                    }
-                    return element?.innerText || "Not found";
+                if (res.ok) {
+                    console.log("File uploaded successfully");
+                } else {
+                    console.error("Upload failed:", res.status, await res.text());
                 }
-            }).then(async results => {
-                const log = results[0].result;
-                if (log.length > 1000) {
-                    const res = await fetch(data.url, {
-                        method: "PUT",
-                        headers: {
-                            "Content-Type": "text/plain"
-                        },
-                        body: log
-                    });
-
-                    if (res.ok) {
-                        console.log("File uploaded successfully");
-                    } else {
-                        console.error("Upload failed:", res.status, await res.text());
-                    }
+            }
+            chrome.storage.local.get("openedUrls").then(result => {
+                if (result.openedUrls && result.openedUrls.includes(detail.url)) {
+                    chrome.tabs.remove(detail.tabId);
                 }
-                chrome.storage.local.get("openedUrls").then(result => {
-                    if (result.openedUrls && result.openedUrls.includes(detail.url)) {
-                        chrome.tabs.remove(detail.tabId);
-                    }
-                })
-            });
+            })
         } catch (err) {
             console.error("API request failed:", err);
         }
@@ -188,9 +187,10 @@ chrome.webNavigation.onCompleted.addListener(
     { url: [{ urlMatches: "https://boardgamearena.com/*" }] },
 );
 
-chrome.webNavigation.onDOMContentLoaded.addListener(
+chrome.webRequest.onSendHeaders.addListener(
     processLogs,
-    { url: [{ urlMatches: "https://boardgamearena.com/gamereview*" }] },
+    { urls: ["https://boardgamearena.com/archive/archive*"] },
+    ["requestHeaders"]
 );
 
 chrome.action.onClicked.addListener(startCollection);

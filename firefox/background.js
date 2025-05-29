@@ -101,30 +101,32 @@ async function processLogs(detail) {
     if (match) {
         const table_id = match[1];
         console.log("Extracted table_id:", table_id);
-        try {
-            const response = await fetch("https://ark-nova-725889947830.us-central1.run.app", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    type: "generate_upload_url",
-                    table_id: table_id,
-                })
-            });
+        const filter = browser.webRequest.filterResponseData(detail.requestId);
+        let decoder = new TextDecoder("utf-8");
+        let log = "";
+        filter.ondata = event => {
+            let str = decoder.decode(event.data, { stream: true });
+            log += str;
+            filter.write(event.data);
+        };
 
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-            const data = await response.json();
-            browser.scripting.executeScript({
-                target: { tabId: detail.tabId },
-                func: () => {
-                    const element = document.querySelector("#gamelogs");
-                    return element?.innerText || "Not found";
+        filter.onstop = async () => {
+            try {
+                const response = await fetch("https://ark-nova-725889947830.us-central1.run.app", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        type: "generate_upload_url",
+                        table_id: table_id,
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
-            }).then(async results => {
-                const log = results[0].result;
+                const data = await response.json();
                 if (log.length > 1000) {
                     const res = await fetch(data.url, {
                         method: "PUT",
@@ -146,10 +148,11 @@ async function processLogs(detail) {
                         browser.tabs.remove(detail.tabId);
                     }
                 })
-            });
-        } catch (err) {
-            console.error("API request failed:", err);
-        }
+            } catch (err) {
+                console.error("API request failed:", err);
+            }
+            filter.disconnect();
+        };
     }
 }
 
@@ -175,9 +178,10 @@ browser.webNavigation.onCompleted.addListener(
 );
 
 
-browser.webNavigation.onCompleted.addListener(
+browser.webRequest.onBeforeRequest.addListener(
     processLogs,
-    { url: [{ urlMatches: "https://boardgamearena.com/gamereview*" }] },
+    { urls: ["https://boardgamearena.com/archive/archive/logs.html*"] },
+    ["blocking"]
 );
 
 browser.action.onClicked.addListener(startCollection);

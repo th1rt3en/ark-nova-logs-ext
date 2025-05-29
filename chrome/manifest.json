@@ -23,6 +23,7 @@
         "storage",
         "scripting",
         "tabs",
+        "webRequest",
         "webNavigation"
     ],
     "version": "1.0"

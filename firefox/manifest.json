@@ -31,7 +31,10 @@
         "storage",
         "scripting",
         "tabs",
+        "webRequest",
+        "webRequestBlocking",
+        "webRequestFilterResponse",
         "webNavigation"
     ],
-    "version": "1.2"
+    "version": "1.3"
 }
