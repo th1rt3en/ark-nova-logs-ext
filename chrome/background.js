@@ -172,7 +172,8 @@ function startCollection(tab) {
     })
 }
 
-function closeTab(detail) {
+async function closeTab(detail) {
+    await new Promise(resolve => setTimeout(resolve, 10000));
     chrome.storage.local.get("openedUrls").then(result => {
         if (result.openedUrls && result.openedUrls.includes(detail.url)) {
             console.log("Closing tab for URL:", detail.url);
