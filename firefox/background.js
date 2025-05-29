@@ -142,12 +142,6 @@ async function processLogs(detail) {
                         console.error("Upload failed:", res.status, await res.text());
                     }
                 }
-                browser.storage.local.get("openedUrls").then(result => {
-                    console.log("Opened URLs:", result.openedUrls);
-                    if (result.openedUrls && result.openedUrls.includes(detail.url)) {
-                        browser.tabs.remove(detail.tabId);
-                    }
-                })
             } catch (err) {
                 console.error("API request failed:", err);
             }
@@ -172,6 +166,16 @@ function startCollection(tab) {
     })
 }
 
+function closeTab(detail) {
+    browser.storage.local.get("openedUrls").then(result => {
+        if (result.openedUrls && result.openedUrls.includes(detail.url)) {
+            console.log("Closing tab for URL:", detail.url);
+            browser.tabs.remove(detail.tabId);
+        }
+    });
+}
+
+
 browser.webNavigation.onCompleted.addListener(
     setCurrentUser,
     { url: [{ urlMatches: "https://boardgamearena.com/player" }] },
@@ -182,6 +186,11 @@ browser.webRequest.onBeforeRequest.addListener(
     processLogs,
     { urls: ["https://boardgamearena.com/archive/archive/logs.html*"] },
     ["blocking"]
+);
+
+browser.webNavigation.onCompleted.addListener(
+    closeTab,
+    { url: [{ urlMatches: "https://boardgamearena.com/gamereview*" }] },
 );
 
 browser.action.onClicked.addListener(startCollection);
